@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "40219428323",
+    "project_id": "avrcrm-3d256",
+    "storage_bucket": "avrcrm-3d256.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:40219428323:android:39e9eff004d5903a744cd6",
+        "android_client_info": {
+          "package_name": "com.avrcrm.avr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAI9iUaannrRTN6ASz8LrFKp2900lODzXQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

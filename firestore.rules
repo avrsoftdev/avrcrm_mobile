@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function sameTenant(resourceData) {
+      return signedIn()
+        && resourceData.companyId == userDoc().companyId;
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && uid == request.auth.uid;
+      allow create: if signedIn() && uid == request.auth.uid;
+      allow update: if signedIn() && uid == request.auth.uid;
+    }
+
+    match /companies/{companyId} {
+      allow read: if signedIn() && companyId == userDoc().companyId;
+      allow create: if signedIn();
+      allow update: if signedIn() && companyId == userDoc().companyId;
+    }
+
+    match /{collection}/{docId} {
+      allow read: if signedIn() && sameTenant(resource.data);
+      allow create: if signedIn() && request.resource.data.companyId == userDoc().companyId;
+      allow update: if signedIn() && sameTenant(resource.data)
+                    && request.resource.data.companyId == userDoc().companyId;
+      allow delete: if signedIn() && sameTenant(resource.data);
+    }
+  }
+}
