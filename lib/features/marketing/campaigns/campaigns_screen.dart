@@ -1421,4 +1421,4 @@ class _StatData {
     this.icon,
     this.color,
   );
-}git remote set-url origin https://github.com/avrsoftdev/avrcrm_mobile.git
+}
