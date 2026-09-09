@@ -36,7 +36,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
         title: const Text('Customers'),
         actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.download_outlined))],
       ),
-      floatingActionButton: FloatingActionButton(onPressed: () {}, child: const Icon(Icons.add)),
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'customers-add-fab',
+        onPressed: () {},
+        child: const Icon(Icons.add),
+      ),
       body: Column(
         children: [
           Padding(

@@ -14,7 +14,11 @@ class OpportunitiesScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Opportunities')),
-      floatingActionButton: FloatingActionButton(onPressed: () {}, child: const Icon(Icons.add)),
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'opportunities-add-fab',
+        onPressed: () {},
+        child: const Icon(Icons.add),
+      ),
       body: ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
         itemCount: stages.length,

@@ -39,6 +39,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'leads-add-fab',
         onPressed: () {},
         child: const Icon(Icons.add),
       ),

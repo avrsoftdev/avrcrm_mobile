@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ContactsScreen extends StatefulWidget {
@@ -97,24 +96,24 @@ class _ContactsScreenState extends State<ContactsScreen> {
     }).toList();
   }
 
- Future<void> _importContacts() async {
-  if (_importing) return;
+  Future<void> _importContacts() async {
+    if (_importing) return;
 
   try {
     setState(() {
       _importing = true;
     });
 
-    final List<PlatformFile> files = await FilePicker.pickFiles(
+    final FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: <String>['csv'],
     );
 
-    if (files.isEmpty) {
+    if (result == null || result.files.isEmpty) {
       return;
     }
 
-    final PlatformFile file = files.first;
+    final PlatformFile file = result.files.first;
 
     final String? filePath = file.path;
 
