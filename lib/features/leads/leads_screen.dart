@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/status_badge.dart';
 import '../../core/utils/formatters.dart';
-import '../../data/mock_data.dart';
-import '../../models/models.dart';
+import 'add_lead_screen.dart';
 
 class LeadsScreen extends StatefulWidget {
   const LeadsScreen({super.key});
@@ -13,34 +14,132 @@ class LeadsScreen extends StatefulWidget {
 }
 
 class _LeadsScreenState extends State<LeadsScreen> {
+  final SupabaseClient _supabase = Supabase.instance.client;
+
   String _search = '';
   String _status = 'All';
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _leads = [];
 
-  List<Lead> get _filtered {
-    var list = MockData.leads;
+  @override
+  void initState() {
+    super.initState();
+    _loadLeads();
+  }
+
+  Future<void> _loadLeads() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final rows = await _supabase
+          .from('leads')
+          .select()
+          .order('created_at', ascending: false);
+
+      if (!mounted) return;
+
+      setState(() {
+        _leads = List<Map<String, dynamic>>.from(rows);
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> get _filtered {
+    var list = _leads;
     if (_search.isNotEmpty) {
       final q = _search.toLowerCase();
-      list = list.where((l) => l.fullName.toLowerCase().contains(q) || l.company.toLowerCase().contains(q) || l.email.toLowerCase().contains(q)).toList();
+      list = list.where((l) {
+        final first = (l['first_name'] ?? '').toString().toLowerCase();
+        final last = (l['last_name'] ?? '').toString().toLowerCase();
+        final company = (l['company'] ?? '').toString().toLowerCase();
+        final email = (l['email'] ?? '').toString().toLowerCase();
+        final phone = (l['phone'] ?? '').toString().toLowerCase();
+        final id = (l['id'] ?? '').toString().toLowerCase();
+        return first.contains(q) ||
+            last.contains(q) ||
+            '$first $last'.contains(q) ||
+            company.contains(q) ||
+            email.contains(q) ||
+            phone.contains(q) ||
+            id.contains(q);
+      }).toList();
     }
-    if (_status != 'All') list = list.where((l) => l.status == _status).toList();
+    if (_status != 'All') {
+      list = list.where((l) => l['status'] == _status).toList();
+    }
     return list;
+  }
+
+  Future<void> _openAddLead() async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const AddLeadScreen()),
+    );
+
+    if (created == true) {
+      await _loadLeads();
+    }
+  }
+
+  String _initials(Map<String, dynamic> lead) {
+    final first = (lead['first_name'] ?? '').toString().trim();
+    final last = (lead['last_name'] ?? '').toString().trim();
+    final a = first.isNotEmpty ? first[0] : '';
+    final b = last.isNotEmpty ? last[0] : '';
+    final value = '$a$b'.toUpperCase();
+    return value.isEmpty ? '?' : value;
+  }
+
+  String _fullName(Map<String, dynamic> lead) {
+    final first = (lead['first_name'] ?? '').toString().trim();
+    final last = (lead['last_name'] ?? '').toString().trim();
+    final name = '$first $last'.trim();
+    return name.isEmpty ? 'Unnamed Lead' : name;
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final statuses = ['All', 'New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'];
+    final statuses = [
+      'All',
+      'New',
+      'Contacted',
+      'Qualified',
+      'Proposal',
+      'Negotiation',
+      'Won',
+      'Lost',
+    ];
+    final filtered = _filtered;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Leads'),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.download_outlined)),
+          IconButton(
+            onPressed: _loading ? null : _loadLeads,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.download_outlined),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'leads-add-fab',
-        onPressed: () {},
+        onPressed: _openAddLead,
         child: const Icon(Icons.add),
       ),
       body: Column(
@@ -49,11 +148,11 @@ class _LeadsScreenState extends State<LeadsScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: TextField(
               onChanged: (v) => setState(() => _search = v),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Search leads...',
-                prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                prefixIcon: Icon(Icons.search_rounded, size: 20),
                 filled: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                contentPadding: EdgeInsets.symmetric(vertical: 10),
               ),
             ),
           ),
@@ -71,9 +170,16 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 return GestureDetector(
                   onTap: () => setState(() => _status = s),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: selected ? AppTheme.primary : (isDark ? const Color(0xFF1E293B) : Colors.grey.shade100),
+                      color: selected
+                          ? AppTheme.primary
+                          : (isDark
+                              ? const Color(0xFF1E293B)
+                              : Colors.grey.shade100),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -81,7 +187,12 @@ class _LeadsScreenState extends State<LeadsScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: selected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
+                        color: selected
+                            ? Colors.white
+                            : Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.color,
                       ),
                     ),
                   ),
@@ -90,65 +201,196 @@ class _LeadsScreenState extends State<LeadsScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-              itemCount: _filtered.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, i) {
-                final lead = _filtered[i];
-                return Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardTheme.color,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: AppTheme.primary.withOpacity(0.12),
-                            child: Text(
-                              lead.firstName[0] + lead.lastName[0],
-                              style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700, fontSize: 13),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(lead.fullName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                                Text(lead.company, style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color)),
-                              ],
-                            ),
-                          ),
-                          StatusBadge(status: lead.status),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          StatusBadge(status: lead.priority, fontSize: 10),
-                          const SizedBox(width: 8),
-                          Text(lead.source, style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
-                          const Spacer(),
-                          Text(Formatters.inr(lead.value), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.primary)),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text('${lead.assignedTo} · ${lead.createdAt}', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
+          Expanded(child: _buildBody(isDark, filtered)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBody(bool isDark, List<Map<String, dynamic>> filtered) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Could not load leads',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.red.shade700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: _loadLeads,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (filtered.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.person_search_outlined,
+              size: 48,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'No leads found',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: _openAddLead,
+              child: const Text('Add your first lead'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadLeads,
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+        itemCount: filtered.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (_, i) {
+          final lead = filtered[i];
+          final company = (lead['company'] ?? '').toString();
+          final status = (lead['status'] ?? '').toString();
+          final priority = (lead['priority'] ?? '').toString();
+          final source = (lead['source'] ?? '').toString();
+          final assignedTo = (lead['assigned_to'] ?? '').toString();
+          final createdAt = (lead['created_at'] ?? '').toString();
+          final value =
+              (lead['expected_value'] as num?)?.toDouble() ?? 0;
+          final createdLabel = createdAt.length >= 10
+              ? createdAt.substring(0, 10)
+              : createdAt;
+
+          return Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardTheme.color,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFF1E293B)
+                    : Colors.grey.shade200,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor:
+                          AppTheme.primary.withOpacity(0.12),
+                      child: Text(
+                        _initials(lead),
+                        style: const TextStyle(
+                          color: AppTheme.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _fullName(lead),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            company.isEmpty ? '—' : company,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.color,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (status.isNotEmpty) StatusBadge(status: status),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    if (priority.isNotEmpty)
+                      StatusBadge(status: priority, fontSize: 10),
+                    if (priority.isNotEmpty) const SizedBox(width: 8),
+                    Text(
+                      source,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.color,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      Formatters.inr(value),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  [
+                    if (assignedTo.isNotEmpty) assignedTo,
+                    if (createdLabel.isNotEmpty) createdLabel,
+                  ].join(' · '),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color:
+                        Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
