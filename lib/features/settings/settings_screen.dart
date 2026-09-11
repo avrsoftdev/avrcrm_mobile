@@ -6,6 +6,7 @@ import '../products/products_screen.dart';
 import '../support/support_screen.dart';
 import '../employees/employees_screen.dart';
 import '../contacts/contacts_screen.dart';
+import '../opportunities/opportunities_screen.dart';
 import '../sales/invoices_screen.dart';
 import '../sales/quotations_screen.dart';
 import '../marketing/marketing_screen.dart';
@@ -59,6 +60,7 @@ class SettingsScreen extends StatelessWidget {
 
           _sectionLabel(context, 'Modules'),
           _menuTile(context, Icons.contacts_outlined, 'Contacts', () => _push(context, const ContactsScreen())),
+          _menuTile(context, Icons.handshake_outlined, 'Opportunities', () => _push(context, const OpportunitiesScreen())),
           _menuTile(context, Icons.receipt_long_rounded, 'Invoices', () => _push(context, const InvoicesScreen())),
           _menuTile(context, Icons.description_outlined, 'Quotations', () => _push(context, const QuotationsScreen())),
           _menuTile(context, Icons.inventory_2_outlined, 'Products', () => _push(context, const ProductsScreen())),
