@@ -15,6 +15,7 @@ import '../reports/reports_screen.dart';
 import '../activities/activities_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../auth/login_screen.dart';
+import '../modules/product_modules_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -60,6 +61,7 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 20),
 
           _sectionLabel(context, 'Modules'),
+          _menuTile(context, Icons.apps_rounded, 'All Products & Modules', () => _push(context, const ProductModulesScreen())),
           _menuTile(context, Icons.contacts_outlined, 'Contacts', () => _push(context, const ContactsScreen())),
           _menuTile(context, Icons.handshake_outlined, 'Opportunities', () => _push(context, const OpportunitiesScreen())),
           _menuTile(context, Icons.shopping_cart_outlined, 'Sales Orders', () => _push(context, const SalesOrdersScreen())),

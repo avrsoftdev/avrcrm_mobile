@@ -6,6 +6,7 @@ import '../leads/leads_screen.dart';
 import '../customers/customers_screen.dart';
 import '../opportunities/opportunities_screen.dart';
 import '../settings/settings_screen.dart';
+import '../modules/product_modules_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
