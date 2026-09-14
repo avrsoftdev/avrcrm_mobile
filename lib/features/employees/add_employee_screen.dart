@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AddEmployeeScreen extends StatefulWidget {
-  const AddEmployeeScreen({super.key});
+  const AddEmployeeScreen({super.key, this.initial});
+  final Map<String, dynamic>? initial;
 
   @override
   State<AddEmployeeScreen> createState() => _AddEmployeeScreenState();
@@ -53,9 +54,18 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
         '${today.year.toString().padLeft(4, '0')}-'
         '${today.month.toString().padLeft(2, '0')}-'
         '${today.day.toString().padLeft(2, '0')}';
-    _idController = TextEditingController(
-      text: 'EMP-${DateTime.now().millisecondsSinceEpoch}',
-    );
+    final initial = widget.initial;
+    _idController = TextEditingController(text: initial?['id']?.toString() ?? 'EMP-${DateTime.now().millisecondsSinceEpoch}');
+    _nameController.text = initial?['name']?.toString() ?? '';
+    _emailController.text = initial?['email']?.toString() ?? '';
+    _phoneController.text = initial?['phone']?.toString() ?? '';
+    if (initial != null) {
+      _department = initial['department']?.toString() ?? _department;
+      _role = initial['role']?.toString() ?? _role;
+      _status = initial['status']?.toString() ?? _status;
+      _joiningDateController.text = initial['joining_date']?.toString() ?? '';
+      _lastLoginController.text = initial['last_login']?.toString() ?? '';
+    }
     _joiningDateController.text = date;
     _lastLoginController.text = date;
   }
@@ -153,13 +163,19 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
         'updated_at': now,
       };
 
-      await _supabase.from('employees').insert(payload);
+      if (widget.initial == null) {
+        await _supabase.from('employees').insert(payload);
+      } else {
+        payload.remove('id');
+        payload.remove('created_at');
+        await _supabase.from('employees').update(payload).eq('id', _idController.text.trim());
+      }
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$name added successfully'),
+          content: Text(widget.initial == null ? '$name added successfully' : '$name updated successfully'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -184,8 +200,8 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Add Employee',
+        title: Text(
+          widget.initial == null ? 'Add Employee' : 'Edit Employee',
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),

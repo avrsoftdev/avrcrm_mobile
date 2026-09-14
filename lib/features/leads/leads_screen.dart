@@ -346,6 +346,20 @@ class _LeadsScreenState extends State<LeadsScreen> {
                       ),
                     ),
                     if (status.isNotEmpty) StatusBadge(status: status),
+                    PopupMenuButton<String>(
+                      onSelected: (action) async {
+                        if (action == 'edit') {
+                          final changed = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => AddLeadScreen(initial: lead)));
+                          if (changed == true) _loadLeads();
+                        } else if (action == 'delete') {
+                          final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(title: const Text('Delete lead?'), content: Text('Delete ${_fullName(lead)}?'), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete'))]));
+                          if (ok == true) {
+                            try { await _supabase.from('leads').delete().eq('id', lead['id']); _loadLeads(); } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete failed: $e'))); }
+                          }
+                        }
+                      },
+                      itemBuilder: (_) => const [PopupMenuItem(value: 'edit', child: Text('Edit')), PopupMenuItem(value: 'delete', child: Text('Delete'))],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),

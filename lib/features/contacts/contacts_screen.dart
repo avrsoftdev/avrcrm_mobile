@@ -332,6 +332,18 @@ class _ContactsScreenState extends State<ContactsScreen> {
                     ],
                   ),
                 ),
+                PopupMenuButton<String>(
+                  onSelected: (action) async {
+                    if (action == 'edit') {
+                      final changed = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => AddContactScreen(initial: c)));
+                      if (changed == true) _loadContacts();
+                    } else {
+                      final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(title: const Text('Delete contact?'), content: Text('Delete ${name.isEmpty ? 'this contact' : name}?'), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete'))]));
+                      if (ok == true) { try { await _supabase.from('contacts').delete().eq('id', c['id']); _loadContacts(); } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete failed: $e'))); } }
+                    }
+                  },
+                  itemBuilder: (_) => const [PopupMenuItem(value: 'edit', child: Text('Edit')), PopupMenuItem(value: 'delete', child: Text('Delete'))],
+                ),
               ],
             ),
           );

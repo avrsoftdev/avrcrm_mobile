@@ -238,6 +238,18 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
                   ),
                 ),
                 if (status.isNotEmpty) StatusBadge(status: status),
+                PopupMenuButton<String>(
+                  onSelected: (action) async {
+                    if (action == 'edit') {
+                      final changed = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => AddEmployeeScreen(initial: e)));
+                      if (changed == true) _loadEmployees();
+                    } else {
+                      final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(title: const Text('Delete employee?'), content: Text('Delete ${name.isEmpty ? 'this employee' : name}?'), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete'))]));
+                      if (ok == true) { try { await _supabase.from('employees').delete().eq('id', e['id']); _loadEmployees(); } catch (err) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete failed: $err'))); } }
+                    }
+                  },
+                  itemBuilder: (_) => const [PopupMenuItem(value: 'edit', child: Text('Edit')), PopupMenuItem(value: 'delete', child: Text('Delete'))],
+                ),
               ],
             ),
           );

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AddLeadScreen extends StatefulWidget {
-  const AddLeadScreen({super.key});
+  const AddLeadScreen({super.key, this.initial});
+  final Map<String, dynamic>? initial;
 
   @override
   State<AddLeadScreen> createState() => _AddLeadScreenState();
@@ -90,9 +91,38 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
   @override
   void initState() {
     super.initState();
-    _idController = TextEditingController(
-      text: 'LD-${DateTime.now().millisecondsSinceEpoch}',
-    );
+    final initial = widget.initial;
+    _idController = TextEditingController(text: initial?['id']?.toString() ?? 'LD-${DateTime.now().millisecondsSinceEpoch}');
+    _firstNameController.text = initial?['first_name']?.toString() ?? '';
+    _lastNameController.text = initial?['last_name']?.toString() ?? '';
+    _companyController.text = initial?['company']?.toString() ?? '';
+    _designationController.text = initial?['designation']?.toString() ?? '';
+    _phoneController.text = initial?['phone']?.toString() ?? '';
+    _alternatePhoneController.text = initial?['alternate_phone']?.toString() ?? '';
+    _emailController.text = initial?['email']?.toString() ?? '';
+    _websiteController.text = initial?['website']?.toString() ?? '';
+    _gstController.text = initial?['gst_number']?.toString() ?? '';
+    _companySizeController.text = initial?['company_size']?.toString() ?? '';
+    _annualRevenueController.text = initial?['annual_revenue']?.toString() ?? '';
+    _interestedProductController.text = initial?['interested_product']?.toString() ?? '';
+    _expectedValueController.text = initial?['expected_value']?.toString() ?? '0';
+    _expectedClosingController.text = initial?['expected_closing_date']?.toString() ?? '';
+    _addressController.text = initial?['address']?.toString() ?? '';
+    _cityController.text = initial?['city']?.toString() ?? '';
+    _stateController.text = initial?['state']?.toString() ?? '';
+    _countryController.text = initial?['country']?.toString() ?? 'India';
+    _pincodeController.text = initial?['pincode']?.toString() ?? '';
+    _notesController.text = initial?['notes']?.toString() ?? '';
+    final tags = initial?['tags'];
+    _tagsController.text = tags is List ? tags.map((e) => e.toString()).join(', ') : (tags?.toString() ?? '');
+    _nextFollowUpController.text = initial?['next_follow_up']?.toString() ?? '';
+    if (initial != null) {
+      _industry = initial['industry']?.toString() ?? _industry;
+      _source = initial['source']?.toString() ?? _source;
+      _status = initial['status']?.toString() ?? _status;
+      _priority = initial['priority']?.toString() ?? _priority;
+      _assignedTo = initial['assigned_to']?.toString() ?? _assignedTo;
+    }
   }
 
   @override
@@ -230,7 +260,13 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
         'converted_to_id': null,
       };
 
-      await _supabase.from('leads').insert(payload);
+      if (widget.initial == null) {
+        await _supabase.from('leads').insert(payload);
+      } else {
+        payload.remove('id');
+        payload.remove('created_at');
+        await _supabase.from('leads').update(payload).eq('id', _idController.text.trim());
+      }
 
       if (!mounted) return;
 
@@ -242,8 +278,8 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
         SnackBar(
           content: Text(
             name.isEmpty
-                ? 'Lead added successfully'
-                : '$name added successfully',
+                ? (widget.initial == null ? 'Lead added successfully' : 'Lead updated successfully')
+                : (widget.initial == null ? '$name added successfully' : '$name updated successfully'),
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -269,9 +305,9 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Add Lead',
-          style: TextStyle(fontWeight: FontWeight.w700),
+        title: Text(
+          widget.initial == null ? 'Add Lead' : 'Edit Lead',
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
       body: Form(
@@ -544,7 +580,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
                       )
                     : const Icon(Icons.person_add_alt_1_outlined),
                 label: Text(
-                  _saving ? 'Saving...' : 'Add Lead',
+                  _saving ? 'Saving...' : (widget.initial == null ? 'Add Lead' : 'Update Lead'),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,

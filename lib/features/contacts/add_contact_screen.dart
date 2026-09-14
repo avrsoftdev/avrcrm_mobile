@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AddContactScreen extends StatefulWidget {
-  const AddContactScreen({super.key});
+  const AddContactScreen({super.key, this.initial});
+  final Map<String, dynamic>? initial;
 
   @override
   State<AddContactScreen> createState() => _AddContactScreenState();
@@ -52,9 +53,20 @@ class _AddContactScreenState extends State<AddContactScreen> {
   @override
   void initState() {
     super.initState();
-    _idController = TextEditingController(
-      text: 'CT-${DateTime.now().millisecondsSinceEpoch}',
-    );
+    final initial = widget.initial;
+    _idController = TextEditingController(text: initial?['id']?.toString() ?? 'CT-${DateTime.now().millisecondsSinceEpoch}');
+    _nameController.text = initial?['name']?.toString() ?? '';
+    _companyController.text = initial?['company']?.toString() ?? '';
+    _customerIdController.text = initial?['customer_id']?.toString() ?? '';
+    _designationController.text = initial?['designation']?.toString() ?? '';
+    _phoneController.text = initial?['phone']?.toString() ?? '';
+    _emailController.text = initial?['email']?.toString() ?? '';
+    _notesController.text = initial?['notes']?.toString() ?? '';
+    if (initial != null) {
+      _department = initial['department']?.toString() ?? _department;
+      _owner = initial['owner']?.toString() ?? _owner;
+      _isDecisionMaker = initial['is_decision_maker'] == true;
+    }
   }
 
   @override
@@ -140,13 +152,19 @@ class _AddContactScreenState extends State<AddContactScreen> {
         'updated_at': now.toIso8601String(),
       };
 
-      await _supabase.from('contacts').insert(payload);
+      if (widget.initial == null) {
+        await _supabase.from('contacts').insert(payload);
+      } else {
+        payload.remove('id');
+        payload.remove('created_at');
+        await _supabase.from('contacts').update(payload).eq('id', _idController.text.trim());
+      }
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$name added successfully'),
+          content: Text(widget.initial == null ? '$name added successfully' : '$name updated successfully'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -171,8 +189,8 @@ class _AddContactScreenState extends State<AddContactScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Add Contact',
+        title: Text(
+          widget.initial == null ? 'Add Contact' : 'Edit Contact',
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
