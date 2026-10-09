@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../core/auth/auth_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_provider.dart';
-import '../dashboard/home_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,23 +19,32 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
   String? _error;
 
+  @override
+  void dispose() {
+    _idCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _login() async {
+    FocusScope.of(context).unfocus();
     setState(() {
       _error = null;
       _loading = true;
     });
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (_idCtrl.text.isEmpty || _passCtrl.text.isEmpty) {
-      setState(() {
-        _error = 'Please enter User ID and Password';
-        _loading = false;
-      });
-      return;
-    }
+
+    final result = await context.read<AuthProvider>().signIn(
+          _idCtrl.text,
+          _passCtrl.text,
+        );
+
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeShell()),
-    );
+
+    setState(() {
+      _loading = false;
+      _error = result.error;
+    });
+    // AuthGate rebuilds to the role-appropriate home on success.
   }
 
   @override
@@ -49,7 +59,9 @@ class _LoginScreenState extends State<LoginScreen> {
               right: 12,
               child: IconButton(
                 onPressed: () => context.read<ThemeProvider>().toggle(),
-                icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
+                icon: Icon(
+                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                ),
               ),
             ),
             Center(
@@ -62,21 +74,34 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withOpacity(0.12),
+                        color: AppTheme.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: AppTheme.primary.withOpacity(0.25)),
+                        border: Border.all(
+                          color: AppTheme.primary.withValues(alpha: 0.25),
+                        ),
                       ),
-                      child: const Icon(Icons.shield_rounded, color: AppTheme.primary, size: 32),
+                      child: const Icon(
+                        Icons.shield_rounded,
+                        color: AppTheme.primary,
+                        size: 32,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     const Text(
                       'AVRCRM',
-                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.5,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'Sign in to your CRM workspace',
-                      style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 14),
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 32),
                     Container(
@@ -85,11 +110,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Theme.of(context).cardTheme.color,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade200,
+                          color: isDark
+                              ? const Color(0xFF1E293B)
+                              : Colors.grey.shade200,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primary.withOpacity(0.06),
+                            color: AppTheme.primary.withValues(alpha: 0.06),
                             blurRadius: 24,
                             offset: const Offset(0, 8),
                           ),
@@ -98,57 +125,111 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Welcome back', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                          const Text(
+                            'Welcome back',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Text(
-                            'Enter your credentials to continue',
-                            style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color),
+                            'Use your company email or employee User ID',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color:
+                                  Theme.of(context).textTheme.bodySmall?.color,
+                            ),
                           ),
                           if (_error != null) ...[
                             const SizedBox(height: 14),
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: AppTheme.destructive.withOpacity(0.1),
+                                color: AppTheme.destructive.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: AppTheme.destructive.withOpacity(0.3)),
+                                border: Border.all(
+                                  color: AppTheme.destructive.withValues(alpha: 0.3),
+                                ),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.error_outline, color: AppTheme.destructive, size: 18),
+                                  const Icon(
+                                    Icons.error_outline,
+                                    color: AppTheme.destructive,
+                                    size: 18,
+                                  ),
                                   const SizedBox(width: 8),
-                                  Expanded(child: Text(_error!, style: const TextStyle(color: AppTheme.destructive, fontSize: 12))),
+                                  Expanded(
+                                    child: Text(
+                                      _error!,
+                                      style: const TextStyle(
+                                        color: AppTheme.destructive,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                           ],
                           const SizedBox(height: 18),
-                          Text('User ID / Email', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Theme.of(context).textTheme.bodySmall?.color)),
+                          Text(
+                            'User ID / Email',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color:
+                                  Theme.of(context).textTheme.bodySmall?.color,
+                            ),
+                          ),
                           const SizedBox(height: 6),
                           TextField(
                             controller: _idCtrl,
                             decoration: const InputDecoration(
-                              hintText: 'admin@avrcrm.in',
-                              prefixIcon: Icon(Icons.mail_outline_rounded, size: 20),
+                              hintText: 'you@company.com or EMP-1001',
+                              prefixIcon:
+                                  Icon(Icons.mail_outline_rounded, size: 20),
                             ),
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
+                            enabled: !_loading,
                           ),
                           const SizedBox(height: 14),
-                          Text('Password', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Theme.of(context).textTheme.bodySmall?.color)),
+                          Text(
+                            'Password',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color:
+                                  Theme.of(context).textTheme.bodySmall?.color,
+                            ),
+                          ),
                           const SizedBox(height: 6),
                           TextField(
                             controller: _passCtrl,
                             obscureText: _obscure,
+                            enabled: !_loading,
                             decoration: InputDecoration(
                               hintText: '••••••••',
-                              prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
+                              prefixIcon: const Icon(
+                                Icons.lock_outline_rounded,
+                                size: 20,
+                              ),
                               suffixIcon: IconButton(
-                                icon: Icon(_obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
-                                onPressed: () => setState(() => _obscure = !_obscure),
+                                icon: Icon(
+                                  _obscure
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  size: 20,
+                                ),
+                                onPressed: () =>
+                                    setState(() => _obscure = !_obscure),
                               ),
                             ),
-                            onSubmitted: (_) => _login(),
+                            onSubmitted: (_) {
+                              if (!_loading) _login();
+                            },
                           ),
                           const SizedBox(height: 20),
                           SizedBox(
@@ -157,15 +238,29 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: ElevatedButton(
                               onPressed: _loading ? null : _login,
                               child: _loading
-                                  ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: Colors.white,
+                                      ),
+                                    )
                                   : const Text('Sign In'),
                             ),
                           ),
                           const SizedBox(height: 12),
                           Center(
                             child: Text(
-                              'Demo: Enter any email & password',
-                              style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color),
+                              'Role and department are assigned by your administrator',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.color,
+                              ),
                             ),
                           ),
                         ],

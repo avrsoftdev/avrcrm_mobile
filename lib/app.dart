@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/auth/access_control.dart';
+import 'core/auth/auth_provider.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/auth/login_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
+import 'features/dashboard/employee_shell.dart';
+import 'features/dashboard/home_shell.dart';
 
 class AVRCRMApp extends StatelessWidget {
   const AVRCRMApp({super.key});
@@ -16,13 +19,10 @@ class AVRCRMApp extends StatelessWidget {
     return MaterialApp(
       title: 'AVRCRM',
       debugShowCheckedModeBanner: false,
-
       theme: _buildLightTheme(),
       darkTheme: _buildDarkTheme(),
       themeMode: themeProvider.themeMode,
-
       home: const AuthGate(),
-
       routes: {
         '/login': (_) => const LoginScreen(),
         '/dashboard': (_) => const DashboardScreen(),
@@ -40,16 +40,13 @@ class AVRCRMApp extends StatelessWidget {
         seedColor: primary,
         brightness: Brightness.light,
       ),
-
       scaffoldBackgroundColor: const Color(0xFFF7F9FC),
-
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
         backgroundColor: Colors.transparent,
       ),
-
       cardTheme: CardThemeData(
         elevation: 0,
         margin: EdgeInsets.zero,
@@ -57,7 +54,6 @@ class AVRCRMApp extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
         ),
       ),
-
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
@@ -81,7 +77,6 @@ class AVRCRMApp extends StatelessWidget {
           vertical: 14,
         ),
       ),
-
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(0, 48),
@@ -90,7 +85,6 @@ class AVRCRMApp extends StatelessWidget {
           ),
         ),
       ),
-
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(0, 48),
@@ -100,13 +94,11 @@ class AVRCRMApp extends StatelessWidget {
           ),
         ),
       ),
-
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
       ),
-
       dividerTheme: const DividerThemeData(
         space: 1,
         thickness: 1,
@@ -124,16 +116,13 @@ class AVRCRMApp extends StatelessWidget {
         seedColor: primary,
         brightness: Brightness.dark,
       ),
-
       scaffoldBackgroundColor: const Color(0xFF0B1120),
-
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
         backgroundColor: Colors.transparent,
       ),
-
       cardTheme: CardThemeData(
         elevation: 0,
         margin: EdgeInsets.zero,
@@ -142,7 +131,6 @@ class AVRCRMApp extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
         ),
       ),
-
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF111827),
@@ -166,7 +154,6 @@ class AVRCRMApp extends StatelessWidget {
           vertical: 14,
         ),
       ),
-
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(0, 48),
@@ -175,7 +162,6 @@ class AVRCRMApp extends StatelessWidget {
           ),
         ),
       ),
-
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(0, 48),
@@ -185,13 +171,11 @@ class AVRCRMApp extends StatelessWidget {
           ),
         ),
       ),
-
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
       ),
-
       dividerTheme: const DividerThemeData(
         space: 1,
         thickness: 1,
@@ -205,24 +189,25 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final supabase = Supabase.instance.client;
+    final auth = context.watch<AuthProvider>();
 
-    return StreamBuilder<AuthState>(
-      stream: supabase.auth.onAuthStateChange,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const AppLoadingScreen();
-        }
+    if (auth.loading && auth.user == null) {
+      return const AppLoadingScreen();
+    }
 
-        final session = supabase.auth.currentSession;
-
-        if (session == null) {
-          return const LoginScreen();
-        }
-
-        return const DashboardScreen();
-      },
-    );
+    switch (auth.homeTarget) {
+      case AuthHomeTarget.login:
+        return const LoginScreen();
+      case AuthHomeTarget.adminHome:
+        return const HomeShell();
+      case AuthHomeTarget.employeeDashboard:
+        return const EmployeeShell();
+      case AuthHomeTarget.denied:
+        return AccessDeniedScreen(
+          message: auth.error ??
+              'This account cannot access the CRM mobile app. Contact your administrator.',
+        );
+    }
   }
 }
 
@@ -273,9 +258,7 @@ class AppLoadingScreen extends StatelessWidget {
                     color: colorScheme.primary,
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 Text(
                   'AVRCRM',
                   style: theme.textTheme.headlineSmall?.copyWith(
@@ -284,9 +267,7 @@ class AppLoadingScreen extends StatelessWidget {
                     letterSpacing: 2,
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 Text(
                   'Business Management System',
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -295,9 +276,7 @@ class AppLoadingScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 28),
-
                 SizedBox(
                   width: 30,
                   height: 30,
@@ -306,9 +285,7 @@ class AppLoadingScreen extends StatelessWidget {
                     color: colorScheme.onPrimary,
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
                 Text(
                   'Loading your workspace...',
                   style: theme.textTheme.bodySmall?.copyWith(

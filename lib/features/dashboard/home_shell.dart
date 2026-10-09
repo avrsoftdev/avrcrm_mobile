@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/theme/theme_provider.dart';
+
+import '../../core/auth/access_control.dart';
+import '../../core/auth/auth_provider.dart';
 import 'dashboard_screen.dart';
 import '../leads/leads_screen.dart';
 import '../customers/customers_screen.dart';
 import '../opportunities/opportunities_screen.dart';
 import '../settings/settings_screen.dart';
-import '../modules/product_modules_screen.dart';
+import 'employee_shell.dart';
 
+/// Admin CRM shell. Employees are redirected away — they use [EmployeeShell].
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -28,6 +31,20 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+
+    if (AccessControl.isEmployee(user)) {
+      return const EmployeeShell();
+    }
+
+    if (!AccessControl.isAdmin(user)) {
+      return AccessDeniedScreen(
+        message: user == null
+            ? 'Please sign in to continue.'
+            : 'Administrator access is required for this workspace.',
+      );
+    }
+
     return Scaffold(
       body: IndexedStack(
         index: _index,
