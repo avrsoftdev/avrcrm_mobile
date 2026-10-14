@@ -44,6 +44,11 @@ class _LoginScreenState extends State<LoginScreen> {
       _loading = false;
       _error = result.error;
     });
+    if (result.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.error!)),
+      );
+    }
     // AuthGate rebuilds to the role-appropriate home on success.
   }
 

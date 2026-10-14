@@ -74,9 +74,8 @@ class AuthProvider extends ChangeNotifier {
 
   Future<AuthResult> signIn(String identifier, String password) async {
     final normalizedIdentifier = identifier.trim();
-    final normalizedPassword = password.trim();
 
-    if (normalizedIdentifier.isEmpty || normalizedPassword.isEmpty) {
+    if (normalizedIdentifier.isEmpty || password.trim().isEmpty) {
       return const AuthResult(
         error: 'Email / User ID and password are required.',
       );
@@ -96,7 +95,7 @@ class AuthProvider extends ChangeNotifier {
         );
       }
 
-      final response = await _auth.signIn(email, normalizedPassword);
+      final response = await _auth.signIn(email, password);
       final authUser = response.user;
       if (authUser == null) {
         _loading = false;

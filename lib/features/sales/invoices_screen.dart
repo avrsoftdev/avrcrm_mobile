@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/auth/auth_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/status_badge.dart';
 import '../../core/utils/formatters.dart';
 import 'add_invoice_screen.dart';
+import 'invoice_pdf_service.dart';
 
 class InvoicesScreen extends StatefulWidget {
   const InvoicesScreen({super.key});
@@ -19,6 +22,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
   bool _loading = true;
   String? _error;
   List<Map<String, dynamic>> _invoices = [];
+  final Set<String> _downloadingInvoiceIds = {};
 
   @override
   void initState() {
@@ -33,9 +37,14 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
     });
 
     try {
+      final tenantId = context.read<AuthProvider>().user?.tenantId.trim();
+      if (tenantId == null || tenantId.isEmpty) {
+        throw StateError('Your workspace assignment could not be verified.');
+      }
       final rows = await _supabase
           .from('invoices')
           .select()
+          .eq('tenant_id', tenantId)
           .order('updated_at', ascending: false);
 
       if (!mounted) return;
@@ -62,6 +71,46 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
     if (created == true) {
       await _loadInvoices();
     }
+  }
+
+  Future<void> _downloadInvoice(String invoiceId) async {
+    if (invoiceId.isEmpty || _downloadingInvoiceIds.contains(invoiceId)) return;
+    final tenantId = context.read<AuthProvider>().user?.tenantId.trim();
+    if (tenantId == null || tenantId.isEmpty) {
+      _showDownloadMessage('Your workspace assignment could not be verified.',
+          error: true);
+      return;
+    }
+
+    setState(() => _downloadingInvoiceIds.add(invoiceId));
+    try {
+      final fileName = await InvoicePdfService().downloadInvoice(
+        invoiceId: invoiceId,
+        tenantId: tenantId,
+      );
+      if (!mounted) return;
+      _showDownloadMessage('$fileName saved successfully.');
+    } on InvoicePdfSaveCancelledException {
+      if (!mounted) return;
+      _showDownloadMessage('Saving the invoice PDF was cancelled.');
+    } catch (error) {
+      if (!mounted) return;
+      _showDownloadMessage('Could not save invoice PDF: $error', error: true);
+    } finally {
+      if (mounted) setState(() => _downloadingInvoiceIds.remove(invoiceId));
+    }
+  }
+
+  void _showDownloadMessage(String message, {bool error = false}) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: error ? Colors.red.shade700 : null,
+        ),
+      );
   }
 
   @override
@@ -160,6 +209,8 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
         itemBuilder: (_, i) {
           final inv = _invoices[i];
           final id = (inv['id'] ?? '').toString();
+          final invoiceNumber =
+              (inv['invoice_number'] ?? inv['id'] ?? '').toString();
           final customer = (inv['customer'] ?? '').toString();
           final status = (inv['status'] ?? '').toString();
           final dueDate = (inv['due_date'] ?? '').toString();
@@ -174,9 +225,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
               color: Theme.of(context).cardTheme.color,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark
-                    ? const Color(0xFF1E293B)
-                    : Colors.grey.shade200,
+                color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade200,
               ),
             ),
             child: Column(
@@ -184,15 +233,17 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      id,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primary,
-                        fontSize: 13,
+                    Expanded(
+                      child: Text(
+                        invoiceNumber,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primary,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
-                    const Spacer(),
                     if (status.isNotEmpty) StatusBadge(status: status),
                   ],
                 ),
@@ -221,13 +272,30 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                           : (date.isNotEmpty ? date : ''),
                       style: TextStyle(
                         fontSize: 11,
-                        color: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.color,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                       ),
                     ),
                   ],
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: id.isEmpty || _downloadingInvoiceIds.contains(id)
+                        ? null
+                        : () => _downloadInvoice(id),
+                    icon: _downloadingInvoiceIds.contains(id)
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                    label: Text(
+                      _downloadingInvoiceIds.contains(id)
+                          ? 'Preparing PDF…'
+                          : 'Download e-Invoice PDF',
+                    ),
+                  ),
                 ),
               ],
             ),
