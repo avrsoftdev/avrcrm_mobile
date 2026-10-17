@@ -5,6 +5,52 @@ import 'all_feature_screens.dart';
 class ProductModulesScreen extends StatelessWidget {
   const ProductModulesScreen({super.key});
 
+  /// Resolves CRM sidebar labels to existing module screens while preserving
+  /// the All Products & Modules catalog.
+  Widget? sidebarScreenFor(String section, String item) {
+    final target = switch ('$section::$item') {
+      'Finance::Invoices' => ('Sales & Invoicing', 'Invoices'),
+      'Finance::Payment Tracking' => ('Sales & Invoicing', 'Payment Tracking'),
+      'Finance::Outstanding' => ('Sales & Invoicing', 'Outstanding Reports'),
+      'Finance::Recurring Invoices' => ('Sales & Invoicing', 'Recurring Invoices'),
+      'Finance::Credit / Debit Notes' => ('Sales & Invoicing', 'Credit/Debit Notes'),
+      'Finance::GST / e-Invoice' => ('Sales & Invoicing', 'GST / e-Invoice'),
+      'CRM::Dashboard' => ('Reports & Dashboards', 'CRM Dashboard'),
+      'CRM::Leads' => ('CRM', 'Lead Management'),
+      'CRM::Opportunities' => ('CRM', 'Deals / Opportunities'),
+      'CRM::Customers' => ('CRM', 'Customer Management'),
+      'CRM::Contacts' => ('CRM', 'Contact Management'),
+      'CRM::Activities' => ('CRM', 'Sales Activities'),
+      'Sales & Invoicing::Quotations' => ('Sales & Invoicing', 'Quotations'),
+      'Sales & Invoicing::Sales Orders' => ('Sales & Invoicing', 'Sales Orders'),
+      'Sales & Invoicing::Orders' => ('Sales & Invoicing', 'Sales Orders'),
+      'Purchase::Vendors' => ('Purchase', 'Vendors'),
+      'Purchase::Purchase Orders' => ('Purchase', 'Purchase Orders'),
+      'Inventory & Production::Products' => ('Inventory', 'Products'),
+      'Inventory & Production::Inventory' => ('Inventory', 'Stock Management'),
+      'Inventory & Production::Production' => ('Production', 'Production Module'),
+      'HR & Marketing::HR & Employees' => ('HR / HR-One', 'Employee Management'),
+      'HR & Marketing::Attendance' => ('HR / HR-One', 'Attendance'),
+      'HR & Marketing::Recruitment' => ('HR / HR-One', 'Recruitment'),
+      'HR & Marketing::Templates' => ('Templates', 'Custom Templates'),
+      'HR & Marketing::SMS Campaigns' => ('Marketing', 'Campaign Management'),
+      'HR & Marketing::Email Campaigns' => ('Marketing', 'Email Marketing'),
+      'HR & Marketing::Marketing' => ('Marketing', 'Campaign Management'),
+      'HR & Marketing::Communication' => ('Marketing', 'WhatsApp Marketing'),
+      'Insights & Platform::Reports' => ('Reports & Dashboards', 'Custom Reports'),
+      'Insights & Platform::Sales Dashboard' => ('Reports & Dashboards', 'Sales Dashboard'),
+      'Insights & Platform::Integrations' => ('Integrations', 'Third-Party Integration'),
+      'Insights & Platform::Android App' => ('Mobile & Web', 'Android Application'),
+      'Insights & Platform::Services' => ('Services', 'Cloud Hosting'),
+      'System::Notifications' => ('Mobile & Web', 'Mobile Notifications'),
+      'System::Activity Logs' => ('Security', 'Activity Logs'),
+      'System::Approvals' => ('Security', 'Approval Workflows'),
+      'System::Settings' => ('Security', 'Admin Panel'),
+      _ => null,
+    };
+    return target == null ? null : _screenFor(target.$1, target.$2);
+  }
+
   static const _modules = <Map<String, dynamic>>[
     {'name': 'CRM', 'icon': Icons.people_alt_rounded, 'features': [
       'Lead Management','Customer Management','Contact Management','Follow-up Management',

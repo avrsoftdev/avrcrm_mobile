@@ -5,18 +5,7 @@ import '../../core/auth/access_control.dart';
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_provider.dart';
-import '../products/products_screen.dart';
 import '../support/support_screen.dart';
-import '../employees/employees_screen.dart';
-import '../contacts/contacts_screen.dart';
-import '../opportunities/opportunities_screen.dart';
-import '../sales/invoices_screen.dart';
-import '../sales/quotations_screen.dart';
-import '../sales/sales_orders_screen.dart';
-import '../marketing/marketing_screen.dart';
-import '../reports/reports_screen.dart';
-import '../activities/activities_screen.dart';
-import '../notifications/notifications_screen.dart';
 import '../modules/product_modules_screen.dart';
 import '../settings/user_management_screen.dart';
 import '../../core/widgets/role_access_guard.dart';
@@ -85,7 +74,8 @@ class SettingsScreen extends StatelessWidget {
                           if (user?.email != null && user!.email.isNotEmpty)
                             user.email,
                         ].join(' · '),
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
                   ),
@@ -94,8 +84,39 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-
           if (isAdmin) ...[
+            _sectionLabel(context, 'CRM Website'),
+            for (final section in _sidebarSections.entries)
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardTheme.color,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color:
+                        isDark ? const Color(0xFF1E293B) : Colors.grey.shade200,
+                  ),
+                ),
+                child: ExpansionTile(
+                  leading: Icon(section.value.$1, color: AppTheme.primary),
+                  title: Text(section.key,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600)),
+                  children: [
+                    for (final item in section.value.$2)
+                      ListTile(
+                        dense: true,
+                        contentPadding:
+                            const EdgeInsets.only(left: 56, right: 16),
+                        title: Text(item, style: const TextStyle(fontSize: 13)),
+                        trailing:
+                            const Icon(Icons.chevron_right_rounded, size: 19),
+                        onTap: () =>
+                            _openSidebarItem(context, section.key, item),
+                      ),
+                  ],
+                ),
+              ),
             _sectionLabel(context, 'Modules'),
             _menuTile(
               context,
@@ -123,33 +144,8 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
             ),
-            _menuTile(context, Icons.contacts_outlined, 'Contacts',
-                () => _push(context, const ContactsScreen())),
-            _menuTile(context, Icons.handshake_outlined, 'Opportunities',
-                () => _push(context, const OpportunitiesScreen())),
-            _menuTile(context, Icons.shopping_cart_outlined, 'Sales Orders',
-                () => _push(context, const SalesOrdersScreen())),
-            _menuTile(context, Icons.receipt_long_rounded, 'Invoices',
-                () => _push(context, const InvoicesScreen())),
-            _menuTile(context, Icons.description_outlined, 'Quotations',
-                () => _push(context, const QuotationsScreen())),
-            _menuTile(context, Icons.inventory_2_outlined, 'Products',
-                () => _push(context, const ProductsScreen())),
-            _menuTile(context, Icons.campaign_outlined, 'Marketing',
-                () => _push(context, const MarketingScreen())),
-            _menuTile(context, Icons.support_agent_rounded, 'Support',
-                () => _push(context, const SupportScreen())),
-            _menuTile(context, Icons.people_outline, 'Employees',
-                () => _push(context, const EmployeesScreen())),
-            _menuTile(context, Icons.bar_chart_rounded, 'Reports',
-                () => _push(context, const ReportsScreen())),
-            _menuTile(context, Icons.history_rounded, 'Activities',
-                () => _push(context, const ActivitiesScreen())),
-            _menuTile(context, Icons.notifications_outlined, 'Notifications',
-                () => _push(context, const NotificationsScreen())),
             const SizedBox(height: 16),
           ],
-
           _sectionLabel(context, 'Preferences'),
           Container(
             margin: const EdgeInsets.only(bottom: 4),
@@ -177,7 +173,6 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 16),
           _sectionLabel(context, 'Account'),
           _menuTile(
@@ -248,4 +243,104 @@ class SettingsScreen extends StatelessWidget {
   void _push(BuildContext context, Widget page) {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
   }
+
+  void _openSidebarItem(BuildContext context, String section, String item) {
+    if (section == 'Insights & Platform' && item == 'Support') {
+      _push(context, const SupportScreen());
+      return;
+    }
+    final screen = const ProductModulesScreen().sidebarScreenFor(section, item);
+    if (screen == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$item is coming soon.')),
+      );
+      return;
+    }
+    _push(context, screen);
+  }
+
+  static const _sidebarSections = <String, (IconData, List<String>)>{
+    'Finance': (
+      Icons.account_balance_wallet_outlined,
+      [
+        'Accounting',
+        'Invoices',
+        'Payment Tracking',
+        'Outstanding',
+        'Recurring Invoices',
+        'Credit / Debit Notes',
+        'GST / e-Invoice',
+      ]
+    ),
+    'CRM': (
+      Icons.people_alt_outlined,
+      [
+        'Dashboard',
+        'Sales Tracking',
+        'Leads',
+        'Opportunities',
+        'Customers',
+        'Contacts',
+        'Activities',
+      ]
+    ),
+    'Sales & Invoicing': (
+      Icons.receipt_long_outlined,
+      [
+        'Quotations',
+        'Sales Orders',
+        'Orders',
+      ]
+    ),
+    'Purchase': (
+      Icons.shopping_bag_outlined,
+      [
+        'Purchase Hub',
+        'Vendors',
+        'Purchase Orders',
+      ]
+    ),
+    'Inventory & Production': (
+      Icons.inventory_2_outlined,
+      [
+        'Products',
+        'Inventory',
+        'Production',
+      ]
+    ),
+    'HR & Marketing': (
+      Icons.campaign_outlined,
+      [
+        'HR & Employees',
+        'Attendance',
+        'Recruitment',
+        'Templates',
+        'SMS Campaigns',
+        'Email Campaigns',
+        'Marketing',
+        'Communication',
+      ]
+    ),
+    'Insights & Platform': (
+      Icons.insights_outlined,
+      [
+        'Reports',
+        'Sales Dashboard',
+        'Automation',
+        'Integrations',
+        'Android App',
+        'Support',
+        'Services',
+      ]
+    ),
+    'System': (
+      Icons.settings_outlined,
+      [
+        'Notifications',
+        'Activity Logs',
+        'Approvals',
+        'Settings',
+      ]
+    ),
+  };
 }
