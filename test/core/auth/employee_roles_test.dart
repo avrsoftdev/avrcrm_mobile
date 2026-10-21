@@ -28,6 +28,7 @@ void main() {
       final modules = employeeAllowedModules(user);
       expect(modules, contains('leads'));
       expect(modules, contains('opportunities'));
+      expect(modules, contains('orders'));
       expect(modules, isNot(contains('user-management')));
       expect(employeeCanAccessModule(user, 'leads'), isTrue);
       expect(employeeCanAccessModule(user, 'user-management'), isFalse);

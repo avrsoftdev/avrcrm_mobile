@@ -46,10 +46,11 @@ const Map<String, EmployeeDepartmentConfig> kEmployeeDepartments = {
       'contacts',
       'activities',
       'quotations',
+      'orders',
       'sales-orders',
       'products',
     ],
-    dataTables: ['leads', 'opportunities', 'sales_orders'],
+    dataTables: ['leads', 'opportunities', 'orders', 'sales_orders'],
   ),
   'support': EmployeeDepartmentConfig(
     key: 'support',
@@ -93,7 +94,7 @@ const Map<String, EmployeeDepartmentConfig> kEmployeeDepartments = {
       'Reconcile accounting activity',
       'Track payment follow-up',
     ],
-    modules: ['invoices', 'quotations', 'sales-orders'],
+    modules: ['invoices', 'quotations', 'orders', 'sales-orders'],
     dataTables: ['invoices', 'accounting_accounts', 'journal_entries'],
   ),
   'hr': EmployeeDepartmentConfig(
@@ -136,8 +137,8 @@ const Map<String, EmployeeDepartmentConfig> kEmployeeDepartments = {
       'Coordinate purchase orders',
       'Resolve fulfillment exceptions',
     ],
-    modules: ['inventory', 'products', 'sales-orders'],
-    dataTables: ['products', 'purchase_orders', 'sales_orders'],
+    modules: ['inventory', 'products', 'orders', 'sales-orders'],
+    dataTables: ['products', 'purchase_orders', 'orders', 'sales_orders'],
   ),
   'procurement': EmployeeDepartmentConfig(
     key: 'procurement',
@@ -174,6 +175,7 @@ const Map<String, String> kTableLabels = {
   'leads': 'Leads',
   'opportunities': 'Opportunities',
   'sales_orders': 'Sales orders',
+  'orders': 'Orders',
   'tickets': 'Customer cases',
   'tasks': 'Assigned tasks',
   'activities': 'Activities',
@@ -201,7 +203,8 @@ String normalizeDepartment(String value) {
     return 'finance';
   }
   if (RegExp(r'human resource|\bhr\b').hasMatch(normalized)) return 'hr';
-  if (RegExp(r'production|manufactur').hasMatch(normalized)) return 'production';
+  if (RegExp(r'production|manufactur').hasMatch(normalized))
+    return 'production';
   if (RegExp(r'operation|logistic|warehouse').hasMatch(normalized)) {
     return 'operations';
   }

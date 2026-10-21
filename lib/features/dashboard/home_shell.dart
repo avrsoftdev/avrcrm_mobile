@@ -6,6 +6,7 @@ import '../../core/auth/auth_provider.dart';
 import 'dashboard_screen.dart';
 import '../leads/leads_screen.dart';
 import '../customers/customers_screen.dart';
+import '../orders/orders_screen.dart';
 import '../opportunities/opportunities_screen.dart';
 import '../settings/settings_screen.dart';
 import 'employee_shell.dart';
@@ -26,6 +27,7 @@ class _HomeShellState extends State<HomeShell> {
     LeadsScreen(),
     CustomersScreen(),
     OpportunitiesScreen(),
+    OrdersScreen(),
     SettingsScreen(),
   ];
 
@@ -75,6 +77,11 @@ class _HomeShellState extends State<HomeShell> {
             icon: Icon(Icons.flag_outlined),
             selectedIcon: Icon(Icons.flag_rounded),
             label: 'Deals',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.shopping_cart_outlined),
+            selectedIcon: Icon(Icons.shopping_cart_rounded),
+            label: 'Orders',
           ),
           NavigationDestination(
             icon: Icon(Icons.more_horiz),

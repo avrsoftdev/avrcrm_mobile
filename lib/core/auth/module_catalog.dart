@@ -8,6 +8,7 @@ import '../../features/inventory/inventory_screen.dart';
 import '../../features/leads/leads_screen.dart';
 import '../../features/marketing/marketing_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
+import '../../features/orders/orders_screen.dart';
 import '../../features/opportunities/opportunities_screen.dart';
 import '../../features/products/products_screen.dart';
 import '../../features/sales/invoices_screen.dart';
@@ -54,6 +55,11 @@ const Map<ModuleKey, ModuleMeta> kModuleCatalog = {
     key: 'quotations',
     title: 'Quotations',
     icon: Icons.description_outlined,
+  ),
+  'orders': ModuleMeta(
+    key: 'orders',
+    title: 'Orders',
+    icon: Icons.shopping_cart_outlined,
   ),
   'sales-orders': ModuleMeta(
     key: 'sales-orders',
@@ -111,6 +117,8 @@ Widget? buildModuleScreen(ModuleKey key) {
       return const ActivitiesScreen();
     case 'quotations':
       return const QuotationsScreen();
+    case 'orders':
+      return const OrdersScreen();
     case 'sales-orders':
       return const SalesOrdersScreen();
     case 'products':
