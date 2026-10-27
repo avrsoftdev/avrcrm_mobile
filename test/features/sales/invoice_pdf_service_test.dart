@@ -23,13 +23,49 @@ void main() {
           'balance': 1624,
           'notes': 'Deliver to the main office.',
           'terms': 'Payment due within 30 days.',
+          'invoice_type': 'Tax Invoice',
+          'gst_transaction_type': 'Intra-state',
+          'supplier_legal_name': 'Example Supplier Pvt Ltd',
+          'supplier_gstin': '27AAAAA1111A1Z1',
+          'supplier_address': '21 Supplier Road',
+          'supplier_state': 'Maharashtra',
+          'supplier_pin_code': '411002',
+          'supplier_phone': '0201234567',
+          'supplier_email': 'billing@supplier.example',
+          'shipping_name': 'Solar Works Warehouse',
+          'shipping_address': '5 Warehouse Lane',
+          'shipping_city': 'Pune',
+          'shipping_state': 'Maharashtra',
+          'shipping_pin_code': '411002',
+          'shipping_country': 'India',
+          'subject': 'Supply and installation of solar panels',
+          'po_number': 'PO-18',
+          'place_of_supply': 'Maharashtra',
+          'state_code': '27',
+          'payment_mode': 'Bank Transfer',
+          'bank_name': 'Example Bank',
+          'account_holder': 'Example Supplier Pvt Ltd',
+          'account_number': '1234567890',
+          'ifsc': 'EXAM0000001',
+          'branch': 'Pune',
+          'freight': 50,
+          'adjustment': -0.25,
+          'discount_total': 200,
+          'taxable_amount': 1600,
+          'cgst': 162,
+          'sgst': 162,
+          'amount_in_words': 'Two Thousand One Hundred Twenty Four rupees only',
           'items': [
             {
               'product': 'Panel A',
+              'hsn_sac': '8541',
+              'unit': 'Each',
               'quantity': 2,
               'price': 500,
               'discount': 10,
               'gst': 18,
+              'cgst': 81,
+              'sgst': 81,
             },
             {
               'description': 'Installation',
@@ -64,7 +100,7 @@ void main() {
       expect(data.billingDetails, contains('GSTIN: 27ABCDE1234F1Z5'));
       expect(data.items, hasLength(2));
       expect(data.items.first.discount, '10%');
-      expect(data.items.first.tax, '18%');
+      expect(data.items.first.tax, '18% / CGST INR 81.00 + SGST INR 81.00');
       expect(data.items.first.amount, 1062);
       expect(data.items[1].amount, 1044);
       expect(data.subtotal, 1800);
@@ -74,6 +110,23 @@ void main() {
       expect(data.balance, 1624);
       expect(data.notes, 'Deliver to the main office.');
       expect(data.paymentTerms, 'Payment due within 30 days.');
+      expect(data.invoiceType, 'Tax Invoice');
+      expect(data.transactionType, 'Intra-state');
+      expect(data.supplierName, 'Example Supplier Pvt Ltd');
+      expect(data.supplierDetails, contains('GSTIN: 27AAAAA1111A1Z1'));
+      expect(data.shippingName, 'Solar Works Warehouse');
+      expect(data.shippingDetails, contains('5 Warehouse Lane'));
+      expect(data.subject, 'Supply and installation of solar panels');
+      expect(data.items.first.hsnSac, '8541');
+      expect(data.items.first.unit, 'Each');
+      expect(data.cgst, 162);
+      expect(data.sgst, 162);
+      expect(data.freight, 50);
+      expect(data.adjustment, -0.25);
+      expect(
+          data.amountWords, 'Two Thousand One Hundred Twenty Four rupees only');
+      expect(data.paymentMode, 'Bank Transfer');
+      expect(data.bankDetails, contains('IFSC: EXAM0000001'));
     });
 
     test('derives available totals from item quantities, discounts and tax',

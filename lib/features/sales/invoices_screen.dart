@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/status_badge.dart';
 import '../../core/utils/formatters.dart';
 import 'add_invoice_screen.dart';
+import 'invoice_detail_screen.dart';
 import 'invoice_pdf_service.dart';
 
 class InvoicesScreen extends StatefulWidget {
@@ -71,6 +72,26 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
     if (created == true) {
       await _loadInvoices();
     }
+  }
+
+  Future<void> _openInvoice(Map<String, dynamic> invoice) async {
+    final tenantId = context.read<AuthProvider>().user?.tenantId.trim();
+    if (tenantId == null || tenantId.isEmpty) {
+      _showDownloadMessage(
+        'Your workspace assignment could not be verified.',
+        error: true,
+      );
+      return;
+    }
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => InvoiceDetailScreen(
+          invoice: invoice,
+          tenantId: tenantId,
+        ),
+      ),
+    );
+    await _loadInvoices();
   }
 
   Future<void> _downloadInvoice(String invoiceId) async {
@@ -219,85 +240,91 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
               (inv['amount'] as num?)?.toDouble() ??
               0;
 
-          return Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardTheme.color,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade200,
+          return InkWell(
+            onTap: () => _openInvoice(inv),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardTheme.color,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color:
+                      isDark ? const Color(0xFF1E293B) : Colors.grey.shade200,
+                ),
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        invoiceNumber,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primary,
-                          fontSize: 13,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          invoiceNumber,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primary,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
-                    ),
-                    if (status.isNotEmpty) StatusBadge(status: status),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  customer.isEmpty ? '—' : customer,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                      if (status.isNotEmpty) StatusBadge(status: status),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Text(
-                      Formatters.inr(total),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      dueDate.isNotEmpty
-                          ? 'Due: $dueDate'
-                          : (date.isNotEmpty ? date : ''),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                      ),
-                    ),
-                  ],
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: id.isEmpty || _downloadingInvoiceIds.contains(id)
-                        ? null
-                        : () => _downloadInvoice(id),
-                    icon: _downloadingInvoiceIds.contains(id)
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.picture_as_pdf_outlined, size: 18),
-                    label: Text(
-                      _downloadingInvoiceIds.contains(id)
-                          ? 'Preparing PDF…'
-                          : 'Download e-Invoice PDF',
+                  const SizedBox(height: 6),
+                  Text(
+                    customer.isEmpty ? '—' : customer,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Text(
+                        Formatters.inr(total),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        dueDate.isNotEmpty
+                            ? 'Due: $dueDate'
+                            : (date.isNotEmpty ? date : ''),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed:
+                          id.isEmpty || _downloadingInvoiceIds.contains(id)
+                              ? null
+                              : () => _downloadInvoice(id),
+                      icon: _downloadingInvoiceIds.contains(id)
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                      label: Text(
+                        _downloadingInvoiceIds.contains(id)
+                            ? 'Preparing PDF…'
+                            : 'Download PDF',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
